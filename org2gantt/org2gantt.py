@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 __author__ = 'Alexandre Norman (norman at xael.org)'
-__version__ = '0.3.8'
-__last_modification__ = '2015.01.16'
+__version__ = '0.3.9'
+__last_modification__ = '2015.01.27'
 
 
 import copy
@@ -78,6 +78,7 @@ def _iso_date_to_datetime(isodate):
 
 __LOG__ = None
 LISTE_IGNORE_TAGS = []
+LISTE_FILTER = []
 
 ############################################################################
 
@@ -126,6 +127,30 @@ def make_task_from_node(n, prop={}, prev_task=''):
     if ' ' in name:
         __LOG__.critical('** Space in task_id: [{0}]'.format(name))
         sys.exit(1)
+
+
+    # check if we should filter this task from display
+    global LISTE_FILTER
+    display = True
+    if len(LISTE_FILTER) > 0:
+        __LOG__.critical('FILTER:{0}'.format(n.tags))
+        for x in n.tags:
+            if x in LISTE_FILTER:
+                __LOG__.critical('FILTER FOUND:{0}'.format(x))
+                break
+        else:
+            __LOG__.critical('FILTER_PROP:{0}'.format(prop['resources']))
+            if prop['resources'] is not None:
+                for x in prop['resources'].replace('[','').replace(']','').split(','):
+                    if x in LISTE_FILTER:
+                        __LOG__.critical('FILTER FOUND:{0}'.format(x))
+                        break
+                else:
+                    display = False
+
+            else:
+                display = False
+        
     
     fullname = n.headline.strip().replace("'", '_')
     start = end = duration = None
@@ -167,6 +192,7 @@ def make_task_from_node(n, prop={}, prev_task=''):
 
     global LISTE_IGNORE_TAGS
 
+    resst = []
 
     # Resources as tag
     if len(n.tags) > 0:
@@ -182,7 +208,7 @@ def make_task_from_node(n, prop={}, prev_task=''):
         ress = "{0}".format(["{0}".format(x) for x in n.properties['allocate'].replace(",", " ").split()]).replace("'", "")
     else:
         try:
-            ress = prop['resources']
+            ress = "{0}".format(["{0}".format(x.strip()) for x in prop['resources'].replace('[','').replace(']','').split(',') if x not in LISTE_IGNORE_TAGS]).replace("'", "")
         except KeyError:
             ress = None
         except TypeError:
@@ -204,7 +230,7 @@ def make_task_from_node(n, prop={}, prev_task=''):
         __LOG__.critical('** Task "{0}" : no start, stop, duration or dependencies -> not included in gantt !'.format(fullname))
         return None
     
-    gantt_code += "task_{0} = gantt.Task(name='{1}', start={2}, stop={6}, duration={3}, resources={4}, depends_of={5}, percent_done={7}, fullname='{8}', color={9})\n".format(name, name, start, duration, ress, None, end, percentdone, fullname, color)
+    gantt_code += "task_{0} = gantt.Task(name='{1}', start={2}, stop={6}, duration={3}, resources={4}, depends_of={5}, percent_done={7}, fullname='{8}', color={9}, display={10})\n".format(name, name, start, duration, ress, None, end, percentdone, fullname, color, display)
 
     # store dependencies for later
     dependencies = str(depends_of).replace("'", "")
@@ -220,9 +246,11 @@ def make_task_from_node(n, prop={}, prev_task=''):
         'gantt': ('g',),
         'svg': ('S',),
         'resource': ('r',),
+        'availibility': ('a',),
         'start_date': ('s',),
         'end_date': ('e',),
         'today': ('t',),
+        'filter': ('f',),
         },
     extra = (
         clize.make_flag(
@@ -232,7 +260,7 @@ def make_task_from_node(n, prop={}, prev_task=''):
             ),
         )
     )
-def __main__(org, gantt='', start_date='', end_date='', today='', debug=False, resource='', svg='project'):
+def __main__(org, gantt='', start_date='', end_date='', today='', debug=False, resource=False, svg='project', filter='', availibility=''):
     """
     org2gantt.py
     
@@ -242,13 +270,17 @@ def __main__(org, gantt='', start_date='', end_date='', today='', debug=False, r
 
     svg: svg base name for files output
 
-    resource: check resource availibility between start_date and end_date
+    resource: generate resources graphe
+
+    availibility: check resource availibility between start_date and end_date
 
     start_date: force start date for output or used for checking resource availibility (format : 'yyyy-mm-dd')
 
     end_date: force end date for output or used for checking resource availibility (format : 'yyyy-mm-dd')
 
     today: force today date (format : 'yyyy-mm-dd')
+
+    filter: tag or list of tags separated by comas to filter
     
     debug: debug
 
@@ -306,6 +338,12 @@ import gantt
     global LISTE_IGNORE_TAGS
     LISTE_IGNORE_TAGS = []
 
+    # List of tag to filter
+    global LISTE_FILTER
+    if filter != '':
+        LISTE_FILTER = filter.split(',')
+
+    __LOG__.debug('LISTE_FILTER : {0}'.format(LISTE_FILTER))
 
     # Generate code for configuration
     if n_configuration is not None:
@@ -379,6 +417,7 @@ import gantt
                     planning_end_date = _iso_date_to_datetime(str(my_today + datetime.timedelta(years=qte*sign)))
 
 
+    __LOG__.debug('List of ignored tags : {0}'.format(LISTE_IGNORE_TAGS))
 
 
     # Find RESOURCES in heading
@@ -433,7 +472,7 @@ import gantt
             new_group_this_turn = True
         # Resource
         else:
-            gantt_code += "{0} = gantt.Resource('{1}')\n".format(rid, rname)
+            gantt_code += "{0} = gantt.Resource(name='{0}', fullname='{1}')\n".format(rid, rname)
             
         # Vacations in body of node
         for line in r.body.split('\n'):
@@ -485,7 +524,7 @@ import gantt
 
     # Generate code for Projects
     gantt_code += "\n#### Projects \n"
-    # Mother of all
+    # Mother of all 
     gantt_code += "project = gantt.Project(color='{0}')\n".format(bar_color['TODO'])
 
     prj_found = False
@@ -613,9 +652,12 @@ import gantt
                     color['TODO'] = bar_color['TODO']
 
 
+
             # Inherits resources
             # Resources as tag
             if len(n.tags) > 0:
+                # For inherit all tags
+                #ress = "{0}".format(["{0}".format(x) for x in n.tags.keys() if x not in LISTE_IGNORE_TAGS]).replace("'", "")
                 ress = "{0}".format(["{0}".format(x) for x in n.tags.keys()]).replace("'", "")
                 # Resources as properties
             elif 'allocate' in n.properties:
@@ -712,17 +754,19 @@ import gantt
         gantt_code += "task_{0}.add_depends(depends_of={1})\n".format(name, dep)
 
 
-    if resource == '':
+    if availibility == '':
         # Full project
         gantt_code += "\n#### Outputs \n"
 
 
         gantt_code += "project.make_svg_for_tasks(filename='{3}.svg', today={0}, start={1}, end={2})\n".format(planning_today_date, planning_start_date, planning_end_date, svg)
-        gantt_code += "project.make_svg_for_resources(filename='{4}_resources.svg', today={0}, start={1}, end={2}, one_line_for_tasks={3})\n".format(planning_today_date, planning_start_date, planning_end_date, one_line_for_tasks, svg)
+        # Generate resource graph
+        if resource:
+            gantt_code += "project.make_svg_for_resources(filename='{4}_resources.svg', today={0}, start={1}, end={2}, one_line_for_tasks={3}, filter='{5}')\n".format(planning_today_date, planning_start_date, planning_end_date, one_line_for_tasks, svg, filter)
 
     else:
         gantt_code += "\n#### Check resource availibility \n"
-        gantt_code += "print({0}.is_vacant(from_date={1}, to_date={2}))\n".format(resource, planning_start_date, planning_end_date)
+        gantt_code += "print({0}.is_vacant(from_date={1}, to_date={2}))\n".format(availibility, planning_start_date, planning_end_date)
         
 
 
