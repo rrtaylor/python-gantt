@@ -1797,19 +1797,10 @@ class Project(object):
             __LOG__.warning('** Empty project : {0}'.format(self.name))
             return
 
-
         self._reset_coord()
 
-        if start is None:
-            start_date = self.start_date()    
-        else:
-            start_date = start
-
-        if end is None:
-            end_date = self.end_date() 
-        else:
-            end_date = end
-
+        start_date = self.start_date(start)
+        end_date = self.end_date(end)
 
         if start_date > end_date:
             __LOG__.critical('start date {0} > end_date {1}'.format(start_date, end_date))
@@ -1867,17 +1858,8 @@ class Project(object):
 
         self._reset_coord()
 
-
-        if start is None:
-            start_date = self.start_date()    
-        else:
-            start_date = start
-
-        if end is None:
-            end_date = self.end_date() 
-        else:
-            end_date = end
-
+        start_date = self.start_date(start)
+        end_date = self.end_date(end)
 
         if start_date > end_date:
             __LOG__.critical('start date {0} > end_date {1}'.format(start_date, end_date))
@@ -2014,10 +1996,13 @@ class Project(object):
             }
 
 
-    def start_date(self):
+    def start_date(self, provided_date=None):
         """
         Returns first day of the project
         """
+        if provided_date is not None:
+            return provided_date
+
         if len(self.tasks) == 0:
             __LOG__.warning('** Empty project : {0}'.format(self.name))
             return datetime.date(9999, 1, 1)
@@ -2029,10 +2014,13 @@ class Project(object):
         return first
 
 
-    def end_date(self):
+    def end_date(self, provided_date=None):
         """
         Returns last day of the project
         """
+        if provided_date is not None:
+            return provided_date
+
         if len(self.tasks) == 0:
             __LOG__.warning('** Empty project : {0}'.format(self.name))
             return datetime.date(1970, 1, 1)
