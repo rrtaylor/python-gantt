@@ -147,9 +147,9 @@ def define_font_attributes(fill='black', stroke='black', stroke_width=0, font_fa
 
     FONT_ATTR = {
         'fill': fill,
-        'stroke' : stroke,
+        'stroke': stroke,
         'stroke_width': stroke_width,
-        'font_family': font_family, 
+        'font_family': font_family,
         }
 
     return
@@ -190,7 +190,7 @@ def add_vacations(start_date, end_date=None):
     start_date -- datetime.date begining of vacation
     end_date -- datetime.date end of vacation of vacation
     """
-    __LOG__.debug('** add_vacations {0}'.format({'start_date':start_date, 'end_date':end_date}))
+    __LOG__.debug('** add_vacations {0}'.format({'start_date': start_date, 'end_date': end_date}))
 
     global VACATIONS
     
@@ -201,10 +201,10 @@ def add_vacations(start_date, end_date=None):
         while start_date <= end_date:
             if start_date not in VACATIONS:
                 VACATIONS.append(start_date)
-                
+   
             start_date += datetime.timedelta(days=1)
 
-    __LOG__.debug('** add_vacations {0}'.format({'start_date':start_date, 'end_date':end_date, 'vac':VACATIONS}))
+    __LOG__.debug('** add_vacations {0}'.format({'start_date': start_date, 'end_date': end_date, 'vac': VACATIONS}))
 
     return
 
@@ -272,7 +272,7 @@ class GroupOfResources(object):
         name -- name given to the resource (id)
         fullname -- long name given to the resource
         """
-        __LOG__.debug('** GroupOfResources::__init__ {0}'.format({'name':name}))
+        __LOG__.debug('** GroupOfResources::__init__ {0}'.format({'name': name}))
         self.name = name
         self.vacations = []
         if fullname is not None:
@@ -297,7 +297,6 @@ class GroupOfResources(object):
             resource.add_group(self)
         return
 
-
     def add_vacations(self, dfrom, dto=None):
         """
         Add vacations to a resource begining at [dfrom] to [dto] (included). If
@@ -307,23 +306,19 @@ class GroupOfResources(object):
         dfrom -- datetime.date begining of vacation
         dto -- datetime.date end of vacation of vacation
         """
-        __LOG__.debug('** Resource::add_vacations {0}'.format({'name':self.name, 'dfrom':dfrom, 'dto':dto}))
+        __LOG__.debug('** Resource::add_vacations {0}'.format({'name': self.name, 'dfrom': dfrom, 'dto': dto}))
         if dto is None:
             self.vacations.append((dfrom, dfrom))
         else:
             self.vacations.append((dfrom, dto))
         return
 
-
-
     def nb_elements(self):
         """
         Returns the number of resources
         """
-        __LOG__.debug('** GroupOfResources::nb_elements ({0})'.format({'name':self.name}))
+        __LOG__.debug('** GroupOfResources::nb_elements ({0})'.format({'name': self.name}))
         return len(self.resources)
-
-
 
     def is_available(self, date):
         """
@@ -335,25 +330,24 @@ class GroupOfResources(object):
         """
         # Global VACATIONS
         if date in VACATIONS:
-            __LOG__.debug('** GroupOfResources::is_available {0} : False (global vacation)'.format({'name':self.name, 'date':date}))
+            __LOG__.debug('** GroupOfResources::is_available {0} : False (global vacation)'.format({'name': self.name, 'date': date}))
             return False
 
         # Group vacations
         for h in self.vacations:
             dfrom, dto = h
             if date >= dfrom and date <= dto:
-                __LOG__.debug('** GroupOfResources::is_available {0} : False (group vacation)'.format({'name':self.name, 'date':date}))
+                __LOG__.debug('** GroupOfResources::is_available {0} : False (group vacation)'.format({'name': self.name, 'date': date}))
                 return False
 
         # Test if at least one resource is avalaible
         for r in self.resources:
             if r.is_available(date):
-                __LOG__.debug('** GroupOfResources::is_available {0} : True {1}'.format({'name':self.name, 'date':date}, r.name))
+                __LOG__.debug('** GroupOfResources::is_available {0} : True {1}'.format({'name': self.name, 'date': date}, r.name))
                 return True
 
-        __LOG__.debug('** GroupOfResources::is_available {0} : False'.format({'name':self.name, 'date':date}))
+        __LOG__.debug('** GroupOfResources::is_available {0} : False'.format({'name': self.name, 'date': date}))
         return False
-
 
     def add_task(self, task):
         """
@@ -366,10 +360,9 @@ class GroupOfResources(object):
             self.tasks.append(task)
         return
 
-
-    def search_for_task_conflicts(self, all_tasks = False):
+    def search_for_task_conflicts(self, all_tasks=False):
         """
-        Returns a dictionnary of all days (datetime.date) containing for each
+        Returns a dictionary of all days (datetime.date) containing for each
         overcharged day the list of task for this day.
 
         It examines all resources member and group tasks.
@@ -380,7 +373,7 @@ class GroupOfResources(object):
         # Get for each resource
         affected_days = {}
         for r in self.resources:
-            ad = r.search_for_task_conflicts(all_tasks = True)
+            ad = r.search_for_task_conflicts(all_tasks=True)
             for d in ad:
                 try:
                     affected_days[d].append(ad[d])
@@ -399,7 +392,6 @@ class GroupOfResources(object):
                   
                 cday += datetime.timedelta(days=1)
 
-
         # compile everything
         overcharged_days = {}
         ke = list(affected_days.keys())
@@ -414,8 +406,6 @@ class GroupOfResources(object):
                 __LOG__.warning('** GroupOfResources "{2}" has more than {3} tasks on day {0} / {1}'.format(d, affected_days[d], self.name, self.nb_elements()))
                 
         return overcharged_days
-
-
 
     def is_vacant(self, from_date, to_date):
         """
