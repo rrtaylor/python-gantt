@@ -1892,7 +1892,6 @@ class Project(object):
                     stroke='black',
                     ))
 
-    
         nline = 2
         conflicts_tasks = []
         conflict_display_line = 1
@@ -1905,9 +1904,7 @@ class Project(object):
             ress.add(svgwrite.text.Text('{0}'.format(r.fullname), insert=(3*mm, (nline*10+7)*mm), fill=_font_attributes()['fill'], stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15+3))
             #ldwg.add(ress)
 
-
             overcharged_days = r.search_for_task_conflicts()
-
 
             conflict_display_line = nline
             nline += 1
@@ -1940,7 +1937,6 @@ class Project(object):
                 
                 cday += datetime.timedelta(days=1)
 
-
             nb_tasks = 0
             for t in self.get_tasks():
                 if t.get_resources() is not None and r in t.get_resources():
@@ -1958,7 +1954,6 @@ class Project(object):
                 ldwg.add(ress)
                 ldwg.add(vac)
                 ldwg.add(conflicts)
-
 
                 if not one_line_for_tasks:
                     ldwg.add(
