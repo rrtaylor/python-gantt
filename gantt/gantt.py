@@ -1824,38 +1824,8 @@ class Project(object):
         if dep is not None:
             ldwg.add(dep)
 
-        if scale == DRAW_WITH_DAILY_SCALE:
-            # how many dayss do we need to draw ?
-            maxx = (end_date - start_date).days
-        elif scale == DRAW_WITH_WEEKLY_SCALE:
-            # how many weeks do we need to draw ?
-            maxx = 0
-            guess = start_date
-
-            guess = start_date
-            while guess.weekday() != 0:
-                guess = guess + dateutil.relativedelta.relativedelta(days=-1)
-
-            while end_date.weekday() != 6:
-                end_date = end_date + dateutil.relativedelta.relativedelta(days=+1)
-            
-            while guess <= end_date:
-                maxx += 1
-                guess = guess + dateutil.relativedelta.relativedelta(weeks=+1)
-        elif scale == DRAW_WITH_MONTHLY_SCALE:
-            # how many months do we need to draw ?
-            if dateutil.relativedelta.relativedelta(end_date, start_date).days == 0:
-                maxx = dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12
-            else:
-                maxx = dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12 + 1
-        elif scale == DRAW_WITH_QUATERLY_SCALE:
-            # how many quarter do we need to draw ?
-            __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
-            sys.exit(1)
-            
-
-
-
+        maxx = self._get_maxx(start_date, end_date, scale)
+       
         dwg = _my_svgwrite_drawing_wrapper(filename, debug=True)
         dwg.add(svgwrite.shapes.Rect(
                     insert=((0)*cm, 0*cm),
@@ -1891,10 +1861,6 @@ class Project(object):
         offset -- X offset from image border to start of drawing zone
         """
 
-        if scale != DRAW_WITH_DAILY_SCALE:
-            __LOG__.warning('** Will draw ressource graph at day scale, not {0} as requested'.format(scale))
-            scale = DRAW_WITH_DAILY_SCALE
-
         if len(self.tasks) == 0:
             __LOG__.warning('** Empty project : {0}'.format(self.name))
             return
@@ -1921,13 +1887,11 @@ class Project(object):
         if resources is None:
             resources = self.get_resources()
 
-        maxx = (end_date - start_date).days 
+        maxx = self._get_maxx(start_date, end_date, scale)
         maxy = len(resources) * 2
-
         if maxy == 0:
             # No resources
             return {}
-
 
         # detect conflicts between resources and holidays
         conflicts_vacations = []
@@ -1935,7 +1899,6 @@ class Project(object):
             conflicts_vacations.append(t.check_conflicts_between_task_and_resources_vacations())
 
         conflicts_vacations = _flatten(conflicts_vacations)
-
 
         ldwg = svgwrite.container.Group()
 
@@ -2282,6 +2245,38 @@ class Project(object):
 
 
         return csv_text
+
+    def _get_maxx(self, start_date, end_date, scale):
+        if scale == DRAW_WITH_DAILY_SCALE:
+            # how many dayss do we need to draw ?
+            maxx = (end_date - start_date).days
+        elif scale == DRAW_WITH_WEEKLY_SCALE:
+            # how many weeks do we need to draw ?
+            maxx = 0
+            guess = start_date
+
+            guess = start_date
+            while guess.weekday() != 0:
+                guess = guess + dateutil.relativedelta.relativedelta(days=-1)
+
+            while end_date.weekday() != 6:
+                end_date = end_date + dateutil.relativedelta.relativedelta(days=+1)
+
+            while guess <= end_date:
+                maxx += 1
+                guess = guess + dateutil.relativedelta.relativedelta(weeks=+1)
+        elif scale == DRAW_WITH_MONTHLY_SCALE:
+            # how many months do we need to draw ?
+            if dateutil.relativedelta.relativedelta(end_date, start_date).days == 0:
+                maxx = dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12
+            else:
+                maxx = dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12 + 1
+        elif scale == DRAW_WITH_QUATERLY_SCALE:
+            # how many quarter do we need to draw ?
+            __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
+            sys.exit(1)
+        return maxx
+
 
 # MAIN -------------------
 if __name__ == '__main__':
