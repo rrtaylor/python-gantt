@@ -106,7 +106,10 @@ ptcm.add_task(ms3)
 p.add_task(ptcm)
 
 ##########################$ MAKE DRAW ###############
-p.make_svg_for_tasks(filename='test_full.svg', today=datetime.date(2014, 12, 31), start=datetime.date(2014,12, 15), end=datetime.date(2015, 1, 14))
+p.make_svg_for_tasks(filename='test_full.svg',
+                     today=datetime.date(2014, 12, 31),
+                     start=datetime.date(2014,12, 15),
+                     end=datetime.date(2015, 1, 14))
 p.make_svg_for_tasks(filename='test_full2.svg', today=datetime.date(2014, 12, 31))
 p.make_svg_for_tasks(filename='test.svg', today=datetime.date(2014, 12, 31), start=datetime.date(2015, 1, 3), end=datetime.date(2015, 1, 6))
 p1.make_svg_for_tasks(filename='test_p1.svg', today=datetime.date(2014, 12, 31))
