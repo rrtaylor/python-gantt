@@ -1658,24 +1658,27 @@ class Project(object):
         dwg = svgwrite.container.Group()
 
         cal = {0:'Mo', 1:'Tu', 2:'We', 3:'Th', 4:'Fr', 5:'Sa', 6:'Su'}
-    
+
         maxx += 1
 
         vlines = dwg.add(svgwrite.container.Group(id='vlines', stroke='lightgray'))
         for x in range(maxx):
             vlines.add(svgwrite.shapes.Line(start=((x+offset/10)*cm, 2*cm), end=((x+offset/10)*cm, (maxy+2)*cm)))
             if scale == DRAW_WITH_DAILY_SCALE:
-                jour = start_date + datetime.timedelta(days=x)
+                dt_draw = start_date + datetime.timedelta(days=x)
+                dt_draw_end = start_date + datetime.timedelta(days=x+1)
             elif scale == DRAW_WITH_WEEKLY_SCALE:
-                jour = start_date +  dateutil.relativedelta.relativedelta(weeks=+x)
+                dt_draw = start_date + dateutil.relativedelta.relativedelta(weeks=x)
+                dt_draw_end = start_date + dateutil.relativedelta.relativedelta(weeks=x+1)
             elif scale == DRAW_WITH_MONTHLY_SCALE:
-                jour = start_date +  dateutil.relativedelta.relativedelta(months=+x)
+                dt_draw = start_date + dateutil.relativedelta.relativedelta(months=x)
+                dt_draw_end = start_date + dateutil.relativedelta.relativedelta(months=x)
             elif scale == DRAW_WITH_QUATERLY_SCALE:
                 # how many quarter do we need to draw ?
                 __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
                 sys.exit(1)
-                
-            if not today is None and today == jour:
+
+            if (today is not None) and (dt_draw <= today < dt_draw_end):
                 vlines.add(svgwrite.shapes.Rect(
                     insert=((x+0.4+offset)*cm, 2*cm),
                     size=(0.2*cm, (maxy)*cm),
@@ -1698,27 +1701,27 @@ class Project(object):
                         ))
 
                 # Current day
-                vlines.add(svgwrite.text.Text('{1} {0:02}'.format(jour.day, cal[jour.weekday()][0]),
+                vlines.add(svgwrite.text.Text('{1} {0:02}'.format(dt_draw.day, cal[dt_draw.weekday()][0]),
                                               insert=((x*10+1+offset)*mm, 19*mm),
                                               fill='black', stroke='black', stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
                 # Year
-                if jour.day == 1 and jour.month == 1:
-                    vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
+                if dt_draw.day == 1 and dt_draw.month == 1:
+                    vlines.add(svgwrite.text.Text('{0}'.format(dt_draw.year),
                                                   insert=((x*10+1+offset)*mm, 5*mm),
                                                   fill='#400000', stroke='#400000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5,
                                                   font_weight="bold"))
                 # Month name
-                if jour.day == 1:
-                    vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%B")),
+                if dt_draw.day == 1:
+                    vlines.add(svgwrite.text.Text('{0}'.format(dt_draw.strftime("%B")),
                                                   insert=((x*10+1+offset)*mm, 10*mm),
                                                   fill='#800000', stroke='#800000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+3,
                                                   font_weight="bold"))
                 # Week number
-                if jour.weekday() == 0:
-                    vlines.add(svgwrite.text.Text('{0:02}'.format(jour.isocalendar()[1]),
+                if dt_draw.weekday() == 0:
+                    vlines.add(svgwrite.text.Text('{0:02}'.format(dt_draw.isocalendar()[1]),
                                                   insert=((x*10+1+offset)*mm, 15*mm),
                                                   fill='black', stroke='black', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'],
@@ -1727,31 +1730,31 @@ class Project(object):
 
             elif scale == DRAW_WITH_WEEKLY_SCALE:
                 # Year
-                if jour.isocalendar()[1] == 1 and jour.month == 1:
-                    vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
+                if dt_draw.isocalendar()[1] == 1 and dt_draw.month == 1:
+                    vlines.add(svgwrite.text.Text('{0}'.format(dt_draw.year),
                                                   insert=((x*10+1+offset)*mm, 5*mm),
                                                   fill='#400000', stroke='#400000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
                 # Month name
-                if jour.day <= 7:
-                    vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%B")),
+                if dt_draw.day <= 7:
+                    vlines.add(svgwrite.text.Text('{0}'.format(dt_draw.strftime("%B")),
                                                   insert=((x*10+1+offset)*mm, 10*mm),
                                                   fill='#800000', stroke='#800000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+3, font_weight="bold"))
-                vlines.add(svgwrite.text.Text('{0:02}'.format(jour.isocalendar()[1]),
+                vlines.add(svgwrite.text.Text('{0:02}'.format(dt_draw.isocalendar()[1]),
                                               insert=((x*10+1+offset)*mm, 15*mm),
                                               fill='black', stroke='black', stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15+1, font_weight="bold"))
 
             elif scale == DRAW_WITH_MONTHLY_SCALE:
                 # Month number
-                vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%m")),
+                vlines.add(svgwrite.text.Text('{0}'.format(dt_draw.strftime("%m")),
                                               insert=((x*10+1+offset)*mm, 19*mm),
                                               fill='black', stroke='black', stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
                 # Year
-                if jour.month == 1:
-                    vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
+                if dt_draw.month == 1:
+                    vlines.add(svgwrite.text.Text('{0}'.format(dt_draw.year),
                                                   insert=((x*10+1+offset)*mm, 5*mm),
                                                   fill='#400000', stroke='#400000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
