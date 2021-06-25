@@ -1493,7 +1493,7 @@ class Milestone(Task):
         svg.add(svgwrite.text.Text(self.fullname, insert=((tx)*mm, (y + 5)*mm), fill=_font_attributes()['fill'], stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15))
 
 
-        return (svg, 2)
+        return (svg, 1)
 
 
     def svg_dependencies(self, prj):
